@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>文字と式　れんしゅう</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="文字と式">
+<meta name="theme-color" content="#2C5F7C">
+<meta name="description" content="6年算数「文字と式」の練習アプリ。URLを開くだけで使えます。">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   基本設定・カラー・フォントサイズ変数
+   ========================================================= */
+:root{
+  --font-scale: 1.0;          /* 小:0.88 / 中:1.0 / 大:1.18 で切り替える */
+  --bg: #FAF8F3;              /* 背景：暖かみのある薄ベージュ */
+  --bg-card: #FFFFFF;         /* カード背景 */
+  --text: #1A1A1A;            /* 本文：柔らかい黒 */
+  --text-sub: #555555;        /* 補足テキスト */
+  --line: #D6D2C7;            /* 薄い罫線 */
+  --line-strong: #1A1A1A;     /* 強い罫線（ボタン縁取り） */
+  --accent: #2C5F7C;          /* アクセント：落ち着いた青 */
+  --accent-soft: #E8EFF4;     /* 選択枠の薄い背景 */
+  --correct: #2D8659;         /* 正解の緑 */
+  --correct-bg: #E7F4EC;
+  --wrong: #C4453B;           /* 不正解のくすみ赤 */
+  --wrong-bg: #FBE9E7;
+  --shadow: 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-strong: 0 6px 14px rgba(0,0,0,0.10);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  height:100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family:'BIZ UDPGothic','Hiragino Maru Gothic ProN','ヒラギノ丸ゴ ProN',
+              'Yu Gothic UI','游ゴシック',sans-serif;
+  font-size: calc(17px * var(--font-scale));
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+button{
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+button:focus{outline: 3px solid #88BFDF; outline-offset: 2px;}
+
+/* =========================================================
+   画面全体レイアウト
+   ========================================================= */
+#app{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 上部ナビゲーション（常に表示） */
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.topbar .title{
+  font-size: calc(18px * var(--font-scale));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.topbar .nav-left,
+.topbar .nav-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* トップに戻るボタン（上部ナビ内） */
+.btn-home{
+  border: 2px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 700;
+  background: var(--bg-card);
+}
+.btn-home:active{background:#EEECE3;}
+.btn-home.hidden{display:none;}
+
+/* 文字サイズ切り替え */
+.fontsize-group{
+  display: inline-flex;
+  border: 2px solid var(--line-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.fontsize-group button{
+  padding: 6px 10px;
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 700;
+  border-right: 1px solid var(--line);
+}
+.fontsize-group button:last-child{border-right: none;}
+.fontsize-group button.active{
+  background: var(--line-strong);
+  color: #FFFFFF;
+}
+
+/* コンテンツ領域 */
+.content{
+  flex: 1;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+/* =========================================================
+   トップ画面（単元選択）
+   ========================================================= */
+.top-hero{
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.top-hero h1{
+  font-size: calc(24px * var(--font-scale));
+  margin-bottom: 4px;
+}
+.top-hero .lead{
+  font-size: calc(15px * var(--font-scale));
+  color: var(--text-sub);
+}
+
+.lesson-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.lesson-card{
+  background: var(--bg-card);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 16px 18px;
+  text-align: left;
+  box-shadow: var(--shadow);
+  transition: transform 0.08s ease, background 0.08s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lesson-card:active{
+  transform: translateY(1px);
+  background: #F5F2E9;
+}
+.lesson-card .lbl{
+  font-size: calc(14px * var(--font-scale));
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.lesson-card .title{
+  font-size: calc(19px * var(--font-scale));
+  font-weight: 700;
+  line-height: 1.5;
+}
+.lesson-card .preview{
+  background: #F5F2E9;
+  border-left: 4px solid var(--accent);
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: calc(14px * var(--font-scale));
+  color: var(--text-sub);
+  line-height: 1.65;
+}
+.lesson-card.matome{
+  background: #F1EDE3;
+  border-color: var(--accent);
+}
+.lesson-card.matome .lbl{color: var(--accent);}
+
+/* =========================================================
+   レッスン画面
+   ========================================================= */
+.lesson-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lesson-header .h-info{
+  font-size: calc(15px * var(--font-scale));
+  font-weight: 700;
+  color: var(--accent);
+}
+.lesson-header .h-info .sub{
+  display: block;
+  font-size: calc(20px * var(--font-scale));
+  color: var(--text);
+  margin-top: 2px;
+}
+.btn-quit{
+  border: 2px solid var(--wrong);
+  background: #fff;
+  color: var(--wrong);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: calc(14px * var(--font-scale));
+}
+.btn-quit:active{background: var(--wrong-bg);}
+
+.progress-bar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: calc(15px * var(--font-scale));
+}
+.progress-bar .counts{
+  display: flex;
+  gap: 16px;
+  font-weight: 700;
+}
+.progress-bar .counts .ok{color: var(--correct);}
+.progress-bar .counts .ng{color: var(--wrong);}
+
+.progress-track{
+  height: 6px;
+  background: #EEE8D7;
+  border-radius: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.progress-track .fill{
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+/* 問題カード */
+.problem-card{
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+}
+.problem-text{
+  font-size: calc(19px * var(--font-scale));
+  line-height: 1.85;
+  margin-bottom: 18px;
+}
+.problem-text b{font-weight: 700;}
+
+/* 回答エリア */
+.answer-area{
+  background: #FBF9F2;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px 16px;
+  min-height: 72px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: calc(24px * var(--font-scale));
+  font-weight: 700;
+}
+
+.slot{
+  min-width: 56px;
+  min-height: 56px;
+  padding: 4px 10px;
+  border: 2px dashed #B3AFA3;
+  border-radius: 8px;
+  background: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(26px * var(--font-scale));
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+.slot.filled{
+  border-style: solid;
+  border-color: var(--line-strong);
+}
+.slot.active{
+  border: 3px solid var(--accent);
+  background: #FFF6D1;
+  box-shadow: 0 0 0 3px rgba(44,95,124,0.15);
+}
+.slot.correct{
+  border-color: var(--correct);
+  background: var(--correct-bg);
+  color: var(--correct);
+}
+.slot.wrong{
+  border-color: var(--wrong);
+  background: var(--wrong-bg);
+  color: var(--wrong);
+}
+.fixed-text{
+  font-size: calc(24px * var(--font-scale));
+  font-weight: 700;
+  padding: 0 2px;
+}
+
+/* 選択肢（場面選択問題用） */
+.choice-list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0 4px;
+}
+.choice-item{
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 2px solid var(--line-strong);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  font-size: calc(17px * var(--font-scale));
+  line-height: 1.75;
+  text-align: left;
+  width: 100%;
+}
+.choice-item .letter{
+  font-size: calc(22px * var(--font-scale));
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 2em;
+}
+.choice-item.selected{
+  background: #FFF6D1;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(44,95,124,0.15);
+}
+.choice-item.correct{
+  background: var(--correct-bg);
+  border-color: var(--correct);
+}
+.choice-item.wrong{
+  background: var(--wrong-bg);
+  border-color: var(--wrong);
+}
+
+/* ブラックボックス用の表 */
+.box-table{
+  border-collapse: collapse;
+  margin: 6px auto 12px;
+  font-size: calc(18px * var(--font-scale));
+}
+.box-table th,.box-table td{
+  border: 2px solid var(--line-strong);
+  padding: 8px 16px;
+  text-align: center;
+}
+.box-table th{background:#F1EDE3;}
+
+/* キーパッド */
+.keypad{
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+.key-row{
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.key-row:last-child{margin-bottom: 0;}
+.key-row.digits{grid-template-columns: repeat(5, 1fr);}
+.key-row.symbols{grid-template-columns: repeat(8, 1fr);}
+.key-row.actions{grid-template-columns: repeat(2, 1fr);}
+
+.key{
+  border: 2px solid var(--line-strong);
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 12px 0;
+  font-size: calc(20px * var(--font-scale));
+  font-weight: 700;
+  min-height: 50px;
+  transition: all 0.08s ease;
+}
+.key:active{
+  background: #EEECE3;
+  transform: translateY(1px);
+  border-width: 3px;
+  padding: 11px 0;
+}
+.key.del{background:#FFF2E7; border-color:#C47E3B;}
+.key.clear{background:#FFF2E7; border-color:#C47E3B;}
+
+/* 操作ボタン */
+.action-bar{
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.btn-primary{
+  flex: 1;
+  max-width: 360px;
+  border: 3px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 12px;
+  padding: 16px 0;
+  font-size: calc(20px * var(--font-scale));
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+.btn-primary:active{transform: translateY(1px);}
+.btn-primary.disabled{background:#A8B4BC; border-color:#A8B4BC; cursor: not-allowed;}
+
+.btn-secondary{
+  flex: 1;
+  max-width: 220px;
+  border: 2px solid var(--line-strong);
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 14px 0;
+  font-size: calc(18px * var(--font-scale));
+  font-weight: 700;
+}
+.btn-secondary:active{background:#EEECE3;}
+
+/* ヒント */
+.btn-hint{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid var(--accent);
+  background: #F5F8FB;
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: calc(15px * var(--font-scale));
+  margin: 4px 0 12px;
+}
+.btn-hint:active{background:#E1ECF4;}
+.hint-panel{
+  background: #F5F8FB;
+  border: 2px solid #B5D4E8;
+  border-radius: 10px;
+  padding: 14px 18px 8px;
+  margin-bottom: 14px;
+  font-size: calc(16px * var(--font-scale));
+  line-height: 1.95;
+  animation: pop 0.18s ease;
+}
+.hint-panel h4{
+  font-size: calc(15px * var(--font-scale));
+  color: var(--accent);
+  margin-bottom: 6px;
+  letter-spacing: 0.05em;
+}
+.hint-panel ol, .hint-panel ul{
+  margin-left: 1.4em;
+  padding-left: 0;
+}
+.hint-panel li{margin: 4px 0;}
+.hint-panel p{margin: 6px 0;}
+.hint-panel b{color: var(--accent);}
+mark.marker{
+  background: linear-gradient(transparent 55%, #B5D4E8 55%, #B5D4E8 95%, transparent 95%);
+  padding: 0 2px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* フィードバック */
+.feedback{
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  font-size: calc(16px * var(--font-scale));
+  line-height: 1.8;
+}
+.feedback.correct{background: var(--correct-bg); border: 2px solid var(--correct); color: var(--correct);}
+.feedback.wrong{background: var(--wrong-bg); border: 2px solid var(--wrong); color: var(--wrong);}
+.feedback .mark{font-size: calc(22px * var(--font-scale)); font-weight: 700; margin-right: 6px;}
+.feedback b{color: var(--text);}
+
+/* 結果画面 */
+.result-hero{
+  background: var(--bg-card);
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 24px 20px;
+  text-align: center;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+}
+.result-hero .score{
+  font-size: calc(48px * var(--font-scale));
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.result-hero .score small{
+  font-size: calc(22px * var(--font-scale));
+  color: var(--text-sub);
+}
+.result-hero .msg{
+  font-size: calc(18px * var(--font-scale));
+  margin-top: 8px;
+}
+.result-list{
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+}
+.result-list .item{
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: calc(15px * var(--font-scale));
+  line-height: 1.6;
+}
+.result-list .item:last-child{border-bottom: none;}
+.result-list .mark{
+  font-size: calc(20px * var(--font-scale));
+  font-weight: 700;
+  min-width: 1.6em;
+}
+.result-list .mark.ok{color: var(--correct);}
+.result-list .mark.ng{color: var(--wrong);}
+
+/* モーダル */
+.modal-back{
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,26,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  animation: fade 0.15s ease;
+}
+.modal-back.show{display: flex;}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal-card{
+  background: var(--bg-card);
+  border-radius: 14px;
+  max-width: 420px;
+  width: 100%;
+  padding: 22px 22px 18px;
+  box-shadow: var(--shadow-strong);
+  animation: pop 0.18s ease;
+}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-card h3{
+  font-size: calc(19px * var(--font-scale));
+  margin-bottom: 8px;
+}
+.modal-card p{
+  font-size: calc(15px * var(--font-scale));
+  color: var(--text-sub);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.modal-card .modal-actions{
+  display: flex;
+  gap: 10px;
+}
+.modal-card .modal-actions button{
+  flex: 1;
+  border-radius: 10px;
+  padding: 12px 0;
+  font-weight: 700;
+  font-size: calc(16px * var(--font-scale));
+  border: 2px solid var(--line-strong);
+  background: var(--bg-card);
+}
+.modal-card .modal-actions .danger{
+  background: var(--wrong);
+  color: #fff;
+  border-color: var(--wrong);
+}
+.modal-card .modal-actions button:active{transform: translateY(1px);}
+
+/* スマホ向け微調整 */
+@media (max-width: 480px){
+  .key-row.digits{grid-template-columns: repeat(5, 1fr);}
+  .key-row.symbols{grid-template-columns: repeat(4, 1fr);}
+  .topbar .title{font-size: calc(15px * var(--font-scale));}
+  .content{padding: 14px 12px 30px;}
+  .slot{min-width: 48px; min-height: 48px; font-size: calc(22px * var(--font-scale));}
+}
+
+/* Utilities */
+.hidden{display: none !important;}
+.small-note{font-size: calc(13px * var(--font-scale)); color: var(--text-sub);}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 上部ナビ -->
+  <header class="topbar">
+    <div class="nav-left">
+      <button id="homeBtn" class="btn-home hidden">← トップに戻る</button>
+      <span class="title">文字と式　れんしゅう</span>
+    </div>
+    <div class="nav-right">
+      <div class="fontsize-group" role="group" aria-label="文字サイズ切り替え">
+        <button data-size="small">小</button>
+        <button data-size="medium" class="active">中</button>
+        <button data-size="large">大</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 画面本体 -->
+  <main id="screen" class="content"></main>
+</div>
+
+<!-- 「やめる」確認モーダル -->
+<div id="quitModal" class="modal-back" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <h3>ここでやめますか？</h3>
+    <p>れんしゅうのとちゅうです。<br>やめるとこれまでの答えはリセットされます。</p>
+    <div class="modal-actions">
+      <button id="quitCancel">つづける</button>
+      <button id="quitOk" class="danger">やめる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==============================================================
+   文字と式　れんしゅう　アプリ本体
+   ============================================================== */
+
+/* --- ユーティリティ --- */
+const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const randInt = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+const shuffle = (arr) => {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const el = (tag, attrs={}, children=[]) => {
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v]) => {
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  children.forEach(c => e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+  return e;
+};
+
+/* ==============================================================
+   問題テンプレート（各時ごとに複数テンプレート、ランダム類題を生成）
+   ============================================================== */
+const TPL = {
+  /* ---------- 第1時：未知の数量を文字 x で表す（立式） ---------- */
+  1: [
+    // T1-1: A円の品をx本 + B円の品1個 → A×x+B
+    () => {
+      const A = rand([30, 40, 50, 60, 80, 100]);
+      const B = rand([100, 150, 200, 250, 300, 500]);
+      const item1 = rand(['えんぴつ','ボールペン','色えんぴつ','マーカー']);
+      const item2 = rand(['ノート','筆箱','したじき','のり']);
+      return {
+        type: 'expression',
+        statement: `1本${A}円の${item1}をx本と、${B}円の${item2}を1個買いました。<br>代金の合計を式に表しましょう。`,
+        boxCount: 5,
+        answer: [String(A),'×','x','+',String(B)],
+        alternates: [[String(B),'+',String(A),'×','x']],
+        explanation: `${item1}の代金は <b>${A}×x 円</b>、${item2}は <b>${B}円</b>。合計は <b>${A}×x＋${B}（円）</b> です。`,
+        hint: `
+          <ol>
+            <li><mark class="marker">1本${A}円の${item1}をx本</mark> の代金 → <b>${A} × x</b> 円</li>
+            <li><mark class="marker">${B}円の${item2}1個</mark> の代金 → <b>${B}</b> 円</li>
+            <li>合計 ＝ ${item1}の代金 ＋ ${item2}の代金</li>
+            <li>だから <b>${A} × x ＋ ${B}</b></li>
+          </ol>`
+      };
+    },
+    // T1-2: B円持っていて A円の品x個 → B−A×x
+    () => {
+      const A = rand([50, 80, 100, 120, 150]);
+      const B = rand([500, 700, 1000, 1500]);
+      const item = rand(['おかし','ジュース','パン','ゼリー']);
+      return {
+        type: 'expression',
+        statement: `${B}円もっていました。1個${A}円の${item}をx個買いました。<br>残りのお金を式に表しましょう。`,
+        boxCount: 5,
+        answer: [String(B),'-',String(A),'×','x'],
+        alternates: [],
+        explanation: `${item}の代金は <b>${A}×x 円</b>、残りは <b>${B}−${A}×x（円）</b> です。`,
+        hint: `
+          <ol>
+            <li>はじめにもっているお金 → <mark class="marker">${B} 円</mark></li>
+            <li><mark class="marker">1個${A}円の${item}をx個</mark> の代金 → <b>${A} × x</b> 円</li>
+            <li>残り ＝ もとのお金 − 代金</li>
+            <li>だから <b>${B} − ${A} × x</b></li>
+          </ol>`
+      };
+    },
+    // T1-3: A円の品1個 + B円の品x個 → A+B×x
+    () => {
+      const A = rand([80, 100, 120, 150, 200]);
+      const B = rand([50, 60, 80, 100]);
+      return {
+        type: 'expression',
+        statement: `${A}円のパン1個と、1個${B}円のおにぎりをx個買いました。<br>代金の合計を式に表しましょう。`,
+        boxCount: 5,
+        answer: [String(A),'+',String(B),'×','x'],
+        alternates: [[String(B),'×','x','+',String(A)]],
+        explanation: `パンは <b>${A}円</b>、おにぎりは <b>${B}×x 円</b>。合計は <b>${A}＋${B}×x（円）</b>。`,
+        hint: `
+          <ol>
+            <li><mark class="marker">${A}円のパン1個</mark> → <b>${A}</b> 円</li>
+            <li><mark class="marker">1個${B}円のおにぎりをx個</mark> → <b>${B} × x</b> 円</li>
+            <li>合計 ＝ パンの代金 ＋ おにぎりの代金</li>
+            <li>だから <b>${A} ＋ ${B} × x</b></li>
+          </ol>`
+      };
+    },
+    // T1-4: 80×5+x=490 形式（未知の1個のねだん）
+    () => {
+      const pencil = rand([50, 60, 70, 80, 90, 100]);
+      const n = rand([3, 4, 5, 6]);
+      const gum = rand([30, 50, 80, 100, 120]);
+      const total = pencil * n + gum;
+      return {
+        type: 'expression',
+        statement: `1本${pencil}円のえんぴつ${n}本と、ねだんのわからない消しゴム1個を買ったら、代金の合計は ${total} 円でした。<br>消しゴム1個のねだんを x 円として、式に表しましょう。`,
+        boxCount: 7,
+        answer: [String(pencil),'×',String(n),'+','x','=',String(total)],
+        alternates: [['x','+',String(pencil),'×',String(n),'=',String(total)]],
+        explanation: `えんぴつ代は <b>${pencil}×${n}＝${pencil*n}円</b>、消しゴムが x 円。合計が ${total} 円なので <b>${pencil}×${n}＋x＝${total}</b>。`,
+        hint: `
+          <ol>
+            <li><mark class="marker">1本${pencil}円のえんぴつ${n}本</mark> の代金 → <b>${pencil} × ${n}</b> 円</li>
+            <li>消しゴム1個のねだん → <b>x</b> 円</li>
+            <li>合計が <mark class="marker">${total} 円</mark> なので、＝ で結ぶ</li>
+            <li>だから <b>${pencil} × ${n} ＋ x ＝ ${total}</b></li>
+          </ol>`
+      };
+    }
+  ],
+
+  /* ---------- 第2時：2つの変わる数量を文字 x, y で表す ---------- */
+  2: [
+    // T2-1: 長方形 縦x×横A=面積y
+    () => {
+      const A = rand([4, 5, 6, 7, 8, 10]);
+      return {
+        type: 'expression',
+        statement: `縦の長さが x cm、横の長さが ${A}cm の長方形があります。<br>面積を y cm² として、x と y の関係を式に表しましょう。`,
+        boxCount: 5,
+        answer: ['x','×',String(A),'=','y'],
+        alternates: [[String(A),'×','x','=','y']],
+        explanation: `長方形の面積 ＝ 縦 × 横 なので、<b>x×${A}＝y</b>（または ${A}×x＝y）。`,
+        hint: `
+          <ol>
+            <li>長方形の面積 ＝ <mark class="marker">縦 × 横</mark></li>
+            <li>たて → <b>x</b> cm、横 → <b>${A}</b> cm</li>
+            <li>計算すると <b>x × ${A}</b></li>
+            <li>これが面積 <mark class="marker">y cm²</mark> と等しいので「＝ y」をつける</li>
+            <li>だから <b>x × ${A} ＝ y</b></li>
+          </ol>`
+      };
+    },
+    // T2-2: 正方形 1辺x まわりy → x×4=y
+    () => {
+      return {
+        type: 'expression',
+        statement: `1辺の長さが x cm の正方形があります。<br>まわりの長さを y cm として、x と y の関係を式に表しましょう。`,
+        boxCount: 5,
+        answer: ['x','×','4','=','y'],
+        alternates: [['4','×','x','=','y']],
+        explanation: `正方形のまわり ＝ 1辺 × 4 なので <b>x×4＝y</b>。`,
+        hint: `
+          <ol>
+            <li>正方形は <mark class="marker">辺が4本</mark> あって、すべて同じ長さ</li>
+            <li>まわりの長さ ＝ 1辺 × 4</li>
+            <li>1辺は <b>x</b> cm なので <b>x × 4</b></li>
+            <li>これが <mark class="marker">y cm</mark> なので「＝ y」をつける</li>
+            <li>だから <b>x × 4 ＝ y</b></li>
+          </ol>`
+      };
+    },
+    // T2-3: Acmのテープからxcm切取 → A−x=y
+    () => {
+      const A = rand([50, 80, 100, 120, 150, 200, 300]);
+      return {
+        type: 'expression',
+        statement: `${A}cm のテープから、x cm 切り取りました。<br>残りの長さを y cm として、x と y の関係を式に表しましょう。`,
+        boxCount: 5,
+        answer: [String(A),'-','x','=','y'],
+        alternates: [],
+        explanation: `もとの長さ − 切り取った長さ ＝ 残り。<b>${A}−x＝y</b>。`,
+        hint: `
+          <ol>
+            <li>もとのテープの長さ → <mark class="marker">${A} cm</mark></li>
+            <li>切り取った長さ → <mark class="marker">x cm</mark></li>
+            <li>残り ＝ もと − 切り取った長さ</li>
+            <li>残りは <b>y</b> cm なので、＝ y をつける</li>
+            <li>だから <b>${A} − x ＝ y</b></li>
+          </ol>`
+      };
+    },
+    // T2-4: 40円のあめとx円のガム → 40+x=y
+    () => {
+      const A = rand([30, 40, 50, 60, 80, 100]);
+      return {
+        type: 'expression',
+        statement: `${A}円のあめ1個と、x 円のガム1個を買いました。<br>代金を y 円として、x と y の関係を式に表しましょう。`,
+        boxCount: 5,
+        answer: [String(A),'+','x','=','y'],
+        alternates: [['x','+',String(A),'=','y']],
+        explanation: `代金 ＝ あめ ＋ ガム なので <b>${A}＋x＝y</b>。`,
+        hint: `
+          <ol>
+            <li>あめのねだん → <mark class="marker">${A} 円</mark></li>
+            <li>ガムのねだん → <mark class="marker">x 円</mark></li>
+            <li>代金 ＝ あめ ＋ ガム</li>
+            <li>代金は <b>y</b> 円なので「＝ y」をつける</li>
+            <li>だから <b>${A} ＋ x ＝ y</b></li>
+          </ol>`
+      };
+    },
+    // T2-5: 底辺Acm×高さxcm÷2=y（三角形の面積）
+    () => {
+      const A = rand([4, 6, 8, 10, 12]);
+      return {
+        type: 'expression',
+        statement: `底辺が ${A}cm、高さが x cm の三角形の面積を y cm² とします。<br>x と y の関係を式に表しましょう。`,
+        boxCount: 7,
+        answer: [String(A),'×','x','÷','2','=','y'],
+        alternates: [['x','×',String(A),'÷','2','=','y']],
+        explanation: `三角形の面積 ＝ 底辺 × 高さ ÷ 2 なので <b>${A}×x÷2＝y</b>。`,
+        hint: `
+          <ol>
+            <li>三角形の面積 ＝ <mark class="marker">底辺 × 高さ ÷ 2</mark></li>
+            <li>底辺 → <b>${A}</b> cm、高さ → <b>x</b> cm</li>
+            <li>計算すると <b>${A} × x ÷ 2</b></li>
+            <li>これが面積 <mark class="marker">y cm²</mark> なので「＝ y」をつける</li>
+            <li>だから <b>${A} × x ÷ 2 ＝ y</b></li>
+          </ol>`
+      };
+    },
+    // T2-6: xLのジュースをA人で等分した1人分y → x÷A=y
+    () => {
+      const A = rand([3, 4, 5, 6, 8]);
+      return {
+        type: 'expression',
+        statement: `x L のジュースを ${A} 人で等しく分けます。<br>1人分の量を y L として、x と y の関係を式に表しましょう。`,
+        boxCount: 5,
+        answer: ['x','÷',String(A),'=','y'],
+        alternates: [],
+        explanation: `全体 ÷ 人数 ＝ 1人分。<b>x÷${A}＝y</b>。`,
+        hint: `
+          <ol>
+            <li>全体のジュース → <mark class="marker">x L</mark></li>
+            <li>分ける人数 → <mark class="marker">${A} 人</mark></li>
+            <li>1人分 ＝ 全体 ÷ 人数</li>
+            <li>1人分は <b>y</b> L なので「＝ y」をつける</li>
+            <li>だから <b>x ÷ ${A} ＝ y</b></li>
+          </ol>`
+      };
+    }
+  ],
+
+  /* ---------- 第3時：式に数を代入して値を求める（小数含む） ---------- */
+  3: [
+    // T3-1: x×A=y にx=B代入
+    () => {
+      const A = rand([3, 4, 5, 6, 8, 3.5, 2.5]);
+      const B = rand([2, 3, 4, 5, 6, 8, 10]);
+      const y = +(A * B).toFixed(2);
+      return {
+        type: 'number',
+        statement: `「 x × ${A} ＝ y 」の式で、x の値が ${B} のとき、y の値はいくつですか。`,
+        prefix: 'y =',
+        suffix: '',
+        answer: y,
+        explanation: `<b>${B} × ${A} ＝ ${y}</b> なので、y の値は <b>${y}</b>。`,
+        hint: `
+          <ol>
+            <li>x のかわりに <mark class="marker">${B}</mark> を式に入れよう</li>
+            <li>すると式は <b>${B} × ${A}</b> となる</li>
+            <li>${B} × ${A} ＝ <b>${y}</b></li>
+          </ol>`
+      };
+    },
+    // T3-2: A×x+B=y にx=C代入
+    () => {
+      const A = rand([3, 4, 5, 6, 8]);
+      const B = rand([10, 20, 30, 50]);
+      const C = rand([2, 3, 4, 5, 6]);
+      const y = A * C + B;
+      return {
+        type: 'number',
+        statement: `「 ${A} × x ＋ ${B} ＝ y 」の式で、x の値が ${C} のとき、y の値はいくつですか。`,
+        prefix: 'y =',
+        suffix: '',
+        answer: y,
+        explanation: `<b>${A} × ${C} ＋ ${B} ＝ ${A*C} ＋ ${B} ＝ ${y}</b>。`,
+        hint: `
+          <ol>
+            <li>x のかわりに <mark class="marker">${C}</mark> を入れる</li>
+            <li>式は <b>${A} × ${C} ＋ ${B}</b></li>
+            <li>かけ算が先：${A} × ${C} ＝ ${A*C}</li>
+            <li>${A*C} ＋ ${B} ＝ <b>${y}</b></li>
+          </ol>`
+      };
+    },
+    // T3-3: x÷A=y にx=B代入（割り切れる組合せ）
+    () => {
+      const A = rand([2, 3, 4, 5, 6]);
+      const n = rand([2, 3, 4, 5, 6, 8, 10]);
+      const B = A * n;
+      const y = n;
+      return {
+        type: 'number',
+        statement: `「 x ÷ ${A} ＝ y 」の式で、x の値が ${B} のとき、y の値はいくつですか。`,
+        prefix: 'y =',
+        suffix: '',
+        answer: y,
+        explanation: `<b>${B} ÷ ${A} ＝ ${y}</b>。`,
+        hint: `
+          <ol>
+            <li>x のかわりに <mark class="marker">${B}</mark> を入れる</li>
+            <li>式は <b>${B} ÷ ${A}</b></li>
+            <li>${B} ÷ ${A} ＝ <b>${y}</b></li>
+          </ol>`
+      };
+    },
+    // T3-4: 長方形 x×A=y にx=Bを代入
+    () => {
+      const A = rand([4, 5, 6, 8]);
+      const B = rand([3, 5, 7, 2.5, 3.5, 5.5, 7.5]);
+      const y = +(A * B).toFixed(2);
+      return {
+        type: 'number',
+        statement: `横の長さが ${A}cm、縦の長さが x cm の長方形の面積 y cm²。<br>x の値が ${B} のとき、面積 y cm² はいくつですか。`,
+        prefix: 'y =',
+        suffix: 'cm²',
+        answer: y,
+        explanation: `<b>${B} × ${A} ＝ ${y}</b> なので、面積は <b>${y} cm²</b>。`,
+        hint: `
+          <ol>
+            <li>長方形の面積 ＝ 縦 × 横</li>
+            <li>縦 (x) のかわりに <mark class="marker">${B}</mark> を入れる</li>
+            <li>${B} × ${A} を計算する</li>
+            <li>${B} × ${A} ＝ <b>${y}</b></li>
+          </ol>`
+      };
+    },
+    // T3-5: 小数代入（正方形の周）
+    () => {
+      const B = rand([3, 4, 5, 3.5, 4.5, 5.5, 7.5]);
+      const y = +(B * 4).toFixed(2);
+      return {
+        type: 'number',
+        statement: `1辺の長さが x cm の正方形のまわりの長さを y cm とすると x × 4 ＝ y。<br>x の値が ${B} のとき、y はいくつですか。`,
+        prefix: 'y =',
+        suffix: 'cm',
+        answer: y,
+        explanation: `<b>${B} × 4 ＝ ${y}</b>。`,
+        hint: `
+          <ol>
+            <li>正方形のまわり ＝ 1辺 × 4</li>
+            <li>1辺 (x) のかわりに <mark class="marker">${B}</mark> を入れる</li>
+            <li>${B} × 4 ＝ <b>${y}</b></li>
+          </ol>`
+      };
+    }
+  ],
+
+  /* ---------- 第4時：逆算・文字に順次代入 ---------- */
+  4: [
+    // T4-1: x×A=y y=B→x?
+    () => {
+      const A = rand([3, 4, 5, 6, 8]);
+      const x = rand([2, 3, 4, 5, 6, 7, 8, 9]);
+      const B = A * x;
+      return {
+        type: 'number',
+        statement: `「 x × ${A} ＝ y 」の式で、y の値が ${B} のとき、x の値はいくつですか。`,
+        prefix: 'x =',
+        suffix: '',
+        answer: x,
+        explanation: `x × ${A} ＝ ${B} だから <b>x ＝ ${B} ÷ ${A} ＝ ${x}</b>。`,
+        hint: `
+          <ol>
+            <li>y のところに <mark class="marker">${B}</mark> を入れる</li>
+            <li>式は <b>x × ${A} ＝ ${B}</b></li>
+            <li>「？× ${A} ＝ ${B}」と考える → <mark class="marker">逆算 (÷)</mark> を使う</li>
+            <li>x ＝ ${B} ÷ ${A} ＝ <b>${x}</b></li>
+          </ol>`
+      };
+    },
+    // T4-2: A+x=B → x?
+    () => {
+      const A = rand([100, 150, 200, 300, 400]);
+      const plus = rand([20, 30, 40, 50, 80, 100, 150, 200]);
+      const B = A + plus;
+      return {
+        type: 'number',
+        statement: `「 ${A} ＋ x ＝ ${B} 」の式で、x の値はいくつですか。`,
+        prefix: 'x =',
+        suffix: '',
+        answer: plus,
+        explanation: `${A} ＋ x ＝ ${B} より <b>x ＝ ${B} − ${A} ＝ ${plus}</b>。`,
+        hint: `
+          <ol>
+            <li>「${A}に何をたしたら${B}になるか」を考える</li>
+            <li>たし算の <mark class="marker">逆算は ひき算</mark></li>
+            <li>x ＝ ${B} − ${A} ＝ <b>${plus}</b></li>
+          </ol>`
+      };
+    },
+    // T4-3: 正多角形 まわりAcm→1辺x
+    () => {
+      const sides = rand([3, 4, 5, 6]);
+      const one = rand([4, 5, 6, 8, 9, 12]);
+      const around = one * sides;
+      const name = {3:'正三角形', 4:'正方形', 5:'正五角形', 6:'正六角形'}[sides];
+      return {
+        type: 'number',
+        statement: `${name}のまわりの長さは ${around}cm です。<br>1辺の長さ x cm を求めましょう。`,
+        prefix: 'x =',
+        suffix: 'cm',
+        answer: one,
+        explanation: `${name}は辺が ${sides} 本。<b>x ＝ ${around} ÷ ${sides} ＝ ${one}</b>。`,
+        hint: `
+          <ol>
+            <li>${name}は <mark class="marker">辺が ${sides} 本</mark> あって、すべて同じ長さ</li>
+            <li>まわりの長さの式：<b>x × ${sides} ＝ ${around}</b></li>
+            <li>逆算で：x ＝ ${around} ÷ ${sides}</li>
+            <li>${around} ÷ ${sides} ＝ <b>${one}</b></li>
+          </ol>`
+      };
+    },
+    // T4-4: 小数の逆算 x×A=B
+    () => {
+      const A = rand([4.5, 3.5, 2.5, 1.5, 6]);
+      const x = rand([2, 3, 4, 6, 8, 10, 12]);
+      const B = +(A * x).toFixed(2);
+      return {
+        type: 'number',
+        statement: `「 x × ${A} ＝ y 」の式で、y の値が ${B} のとき、x の値はいくつですか。`,
+        prefix: 'x =',
+        suffix: '',
+        answer: x,
+        explanation: `<b>x ＝ ${B} ÷ ${A} ＝ ${x}</b>。`,
+        hint: `
+          <ol>
+            <li>y のところに <mark class="marker">${B}</mark> を入れる</li>
+            <li>式は <b>x × ${A} ＝ ${B}</b></li>
+            <li>かけ算の <mark class="marker">逆算は わり算</mark></li>
+            <li>x ＝ ${B} ÷ ${A} ＝ <b>${x}</b></li>
+          </ol>`
+      };
+    },
+    // T4-5: 順次代入（1000円で300円ジュース＋120円おにぎりx個）
+    () => {
+      const total = rand([1000, 1500, 2000]);
+      const drink = rand([200, 250, 300]);
+      const rice = rand([100, 120, 150, 180]);
+      const maxX = Math.floor((total - drink) / rice);
+      return {
+        type: 'number',
+        statement: `${total}円で、${drink}円のジュース1本と、1個${rice}円のおにぎりを x 個買います。<br>代金が ${total}円以内になる x の最大の値を求めましょう。`,
+        prefix: 'x =',
+        suffix: '個',
+        answer: maxX,
+        explanation: `${drink} ＋ ${rice} × x ≦ ${total}。x ＝ 1,2,3 …と当てはめて調べると <b>x ＝ ${maxX} のとき ${drink + rice*maxX}円</b>で、これが最大です。`,
+        hint: `
+          <ol>
+            <li>合計の式：<mark class="marker">${drink} ＋ ${rice} × x</mark>（円）</li>
+            <li>これが ${total}円以下にならないといけない</li>
+            <li>x ＝ 1, 2, 3, … と <mark class="marker">じゅんに数を当てはめて</mark> 試そう</li>
+            <li>x ＝ ${maxX} のとき：${drink} ＋ ${rice} × ${maxX} ＝ ${drink + rice*maxX}円（${total}円以下 ○）</li>
+            <li>x ＝ ${maxX+1} のとき：${drink + rice*(maxX+1)}円（${total}円をこえる ✕）</li>
+            <li>だから x の最大は <b>${maxX}</b></li>
+          </ol>`
+      };
+    }
+  ],
+
+  /* ---------- 第5時：式の意味を読み取る・まとめ ---------- */
+  5: [
+    // T5-1: 式から場面を選ぶ（A×x=y型）
+    () => {
+      const A = rand([30, 50, 80, 100, 120]);
+      return {
+        type: 'choice',
+        statement: `式「 ${A} × x ＝ y 」で表される場面はどれですか。`,
+        choices: shuffle([
+          { letter:'⑦', text:`1個 ${A} 円のおかしを x 個買ったときの代金 y 円。`, correct: true },
+          { letter:'④', text:`${A} m のひもを x 本に同じ長さに分けた、1本分の長さ y m。`, correct: false },
+          { letter:'②', text:`${A} 人いたうち x 人が帰り、残りが y 人。`, correct: false },
+          { letter:'①', text:`${A} 個あめがあり、x 個足すと y 個になる。`, correct: false }
+        ]),
+        explanation: `「 ${A}×x 」は「1つあたり×いくつ分」の形。だから <b>「1個${A}円を x 個買った代金」</b>が当てはまる。`,
+        hint: `
+          <ol>
+            <li><mark class="marker">${A} × x</mark> は「1つあたりの数 × いくつ分」のかたち</li>
+            <li>「1個 ${A} 円」「1本 ${A} m」のような <b>「1つあたり」</b> の数があるか見よう</li>
+            <li>そして <b>「いくつ分（x）」</b> をかけている場面をさがそう</li>
+            <li>引いたり、たしたり、わったりしている場面はちがう</li>
+          </ol>`
+      };
+    },
+    // T5-2: 式から場面を選ぶ（A÷x=y型）
+    () => {
+      const A = rand([30, 60, 90, 120]);
+      return {
+        type: 'choice',
+        statement: `式「 ${A} ÷ x ＝ y 」で表される場面はどれですか。`,
+        choices: shuffle([
+          { letter:'⑦', text:`${A} 人から x 人が帰り、残りが y 人。`, correct: false },
+          { letter:'④', text:`${A} m のひもを x 本に同じ長さに分けた、1本分の長さ y m。`, correct: true },
+          { letter:'②', text:`1個${A}円のお菓子を x 個買った代金 y 円。`, correct: false },
+          { letter:'①', text:`${A} 円と x 円を合わせた y 円。`, correct: false }
+        ]),
+        explanation: `「 ${A} ÷ x 」は「全体 ÷ 分ける数」。<b>「${A}m を x 本に等分した1本分」</b>が当てはまる。`,
+        hint: `
+          <ol>
+            <li><mark class="marker">${A} ÷ x</mark> は「全体 ÷ 分ける数 ＝ 1つ分」のかたち</li>
+            <li>「全体が ${A}」「x で わける」という場面をさがそう</li>
+            <li>「同じ長さに分ける」「等分する」がキーワード</li>
+          </ol>`
+      };
+    },
+    // T5-3: 場面から式を選ぶ
+    () => {
+      return {
+        type: 'choice',
+        statement: `「1辺の長さが x cm の正方形のまわりの長さ y cm」を表す式はどれですか。`,
+        choices: shuffle([
+          { letter:'⑦', text:`x ＋ 4 ＝ y`, correct: false },
+          { letter:'④', text:`x × 4 ＝ y`, correct: true },
+          { letter:'②', text:`x ÷ 4 ＝ y`, correct: false },
+          { letter:'①', text:`x − 4 ＝ y`, correct: false }
+        ]),
+        explanation: `正方形のまわり ＝ 1辺 × 4。だから <b>x×4＝y</b>。`,
+        hint: `
+          <ol>
+            <li>正方形は <mark class="marker">辺が4本、すべて同じ長さ</mark></li>
+            <li>1辺の長さを4回たすので、まとめると ×（かけ算）になる</li>
+            <li>1辺 (x) × 4 ＝ まわり (y)</li>
+          </ol>`
+      };
+    },
+    // T5-4: ブラックボックス（x×A+B=y のパターン発見）
+    () => {
+      const A = rand([2, 3, 5, 10]);
+      const B = rand([1, 3, 5, 10]);
+      const samples = [1, 2, 5, 10];
+      const table = samples.map(x => ({ x, y: A*x + B }));
+      return {
+        type: 'number2',
+        statement: `表のような入れる数と出てくる数のきまりがあります。<br>入れる数を x、出てくる数を y として、関係を表す式の中の ▲ と ★ の数を答えましょう。<br><span class="small-note">x × ▲ ＋ ★ ＝ y</span>`,
+        tableRows: table,
+        prefix1: 'x ×',
+        prefix2: '＋',
+        suffix: '＝ y',
+        answer1: A,
+        answer2: B,
+        explanation: `x が 1 増えるごとに y が ${A} 増えているので「×${A}」。x=0 のときの値を求めると <b>＋${B}</b>。つまり <b>x×${A}＋${B}＝y</b>。`,
+        hint: `
+          <ol>
+            <li>x が 1 から 2 になると、y は ${A*1+B} から ${A*2+B} に増える</li>
+            <li>増えた分は <mark class="marker">${A}</mark> → これが ▲</li>
+            <li>x = 1 のとき y は ${A+B}。「${A} × 1 ＋ いくつ ＝ ${A+B}」を考える</li>
+            <li>${A} に <b>${B}</b> をたすと ${A+B} → これが ★</li>
+            <li>つまり x × <b>${A}</b> ＋ <b>${B}</b> ＝ y</li>
+          </ol>`
+      };
+    },
+    // T5-5: 長方形面積・代入の逆
+    () => {
+      const A = rand([4, 5, 6, 8]);
+      const y = rand([24, 32, 40, 48, 56, 64]);
+      const x = y / A;
+      if (!Number.isInteger(x)) {
+        // フォールバック：割り切れる値に調整
+        return TPL[5][0]();
+      }
+      return {
+        type: 'number',
+        statement: `横の長さが ${A}cm、縦の長さが x cm の長方形の面積を y cm² とすると x × ${A} ＝ y。<br>面積が ${y} cm² のとき、x の値はいくつですか。`,
+        prefix: 'x =',
+        suffix: 'cm',
+        answer: x,
+        explanation: `x × ${A} ＝ ${y} だから <b>x ＝ ${y} ÷ ${A} ＝ ${x}</b>。`,
+        hint: `
+          <ol>
+            <li>面積 ＝ 縦 × 横 ＝ <mark class="marker">${y} cm²</mark></li>
+            <li>横が ${A} cm なので、式は <b>x × ${A} ＝ ${y}</b></li>
+            <li>かけ算の <mark class="marker">逆算は わり算</mark></li>
+            <li>x ＝ ${y} ÷ ${A} ＝ <b>${x}</b></li>
+          </ol>`
+      };
+    }
+  ]
+};
+
+/* 各単元のプレビュー用の文字（トップ画面に表示） */
+const LESSON_META = {
+  1: {
+    label: '第 1 時',
+    title: '未知の数量を 文字(x) で あらわそう',
+    preview: '例：「1本60円のえんぴつ x 本と320円のふでばこ1個の代金を式に」'
+  },
+  2: {
+    label: '第 2 時',
+    title: '2つの変わる数量を 文字(x, y) で あらわそう',
+    preview: '例：「1辺 x cm の正方形のまわり y cm の関係を式に」'
+  },
+  3: {
+    label: '第 3 時',
+    title: '式に数を代入して 値を求めよう',
+    preview: '例：「 x × 3.5 ＝ y で x が 12 のとき y は？」'
+  },
+  4: {
+    label: '第 4 時',
+    title: '逆算・じゅん次に数を あてはめよう',
+    preview: '例：「正三角形のまわりが 45cm。1辺 x cm は？」'
+  },
+  5: {
+    label: '第 5 時',
+    title: '式の意味を読み取ろう・まとめ',
+    preview: '例：「 30 × x ＝ y はどんな場面？ 4つから選ぼう」'
+  },
+  matome: {
+    label: 'まとめテスト',
+    title: '全単元から 20 問 チャレンジ',
+    preview: '第1時〜第5時の問題をランダムに出題します'
+  }
+};
+
+/* ==============================================================
+   問題生成
+   ============================================================== */
+function generateProblems(lessonKey, count) {
+  const out = [];
+  let tries = 0;
+  const pool = lessonKey === 'matome'
+    ? [].concat(TPL[1], TPL[2], TPL[3], TPL[4], TPL[5])
+    : TPL[lessonKey];
+  while (out.length < count && tries < count * 10) {
+    const gen = rand(pool);
+    const p = gen();
+    out.push(p);
+    tries++;
+  }
+  return out;
+}
+
+/* ==============================================================
+   アプリ状態
+   ============================================================== */
+const state = {
+  screen: 'top',          // 'top' | 'lesson' | 'result'
+  lesson: null,           // 1..5 | 'matome'
+  problems: [],
+  currentIdx: 0,
+  results: [],            // [{correct, user, answer}]
+  // 解答中の入力状態
+  slots: [],              // array of strings (expression/number2)
+  selectedSlot: 0,
+  numInput: '',           // for 'number' type
+  choiceIndex: -1,        // for 'choice' type
+  answered: false,        // 現在の問題が採点済みか
+  showHint: false,        // ヒント表示中か
+  fontSize: 'medium'
+};
+
+/* ==============================================================
+   画面レンダリング
+   ============================================================== */
+function render() {
+  const screen = $('#screen');
+  screen.innerHTML = '';
+  // homeボタンの表示切替
+  $('#homeBtn').classList.toggle('hidden', state.screen === 'top');
+
+  if (state.screen === 'top') renderTop(screen);
+  else if (state.screen === 'lesson') renderLesson(screen);
+  else if (state.screen === 'result') renderResult(screen);
+}
+
+function renderTop(root) {
+  const hero = el('div', {class:'top-hero'}, []);
+  hero.appendChild(el('h1', {}, ['文字と式　れんしゅう']));
+  hero.appendChild(el('div', {class:'lead'}, ['小学校6年生　算数：単元「文字と式」の学習アプリ。学びたい時間をえらんでください。']));
+  root.appendChild(hero);
+
+  const grid = el('div', {class:'lesson-grid'});
+  ['1','2','3','4','5','matome'].forEach(k => {
+    const meta = LESSON_META[k];
+    const card = el('button', {
+      class: 'lesson-card' + (k==='matome'?' matome':''),
+      onclick: () => startLesson(k==='matome'?'matome':Number(k))
+    });
+    card.appendChild(el('div', {class:'lbl'}, [meta.label]));
+    card.appendChild(el('div', {class:'title'}, [meta.title]));
+    card.appendChild(el('div', {class:'preview'}, [meta.preview]));
+    grid.appendChild(card);
+  });
+  root.appendChild(grid);
+}
+
+function renderLesson(root) {
+  const p = state.problems[state.currentIdx];
+  const total = state.problems.length;
+
+  // ヘッダー
+  const header = el('div', {class:'lesson-header'});
+  const info = el('div', {class:'h-info'});
+  info.appendChild(el('span', {}, [LESSON_META[state.lesson===null?'':state.lesson].label]));
+  info.appendChild(el('span', {class:'sub'}, [LESSON_META[state.lesson===null?'':state.lesson].title]));
+  header.appendChild(info);
+  header.appendChild(el('button', {class:'btn-quit', onclick: showQuitModal}, ['✕ やめる']));
+  root.appendChild(header);
+
+  // 進捗
+  const okCount = state.results.filter(r => r.correct).length;
+  const ngCount = state.results.filter(r => !r.correct).length;
+  const progress = el('div', {class:'progress-bar'});
+  progress.appendChild(el('div', {}, [`第 ${state.currentIdx+1} 問　／　全 ${total} 問`]));
+  const counts = el('div', {class:'counts'});
+  counts.appendChild(el('span', {class:'ok'}, [`○ ${okCount}`]));
+  counts.appendChild(el('span', {class:'ng'}, [`✕ ${ngCount}`]));
+  progress.appendChild(counts);
+  root.appendChild(progress);
+
+  const track = el('div', {class:'progress-track'});
+  const fill = el('div', {class:'fill'});
+  fill.style.width = `${Math.round((state.currentIdx/total)*100)}%`;
+  track.appendChild(fill);
+  root.appendChild(track);
+  root.appendChild(el('div', {style:'height:12px'}));
+
+  // 問題
+  const card = el('div', {class:'problem-card'});
+  card.appendChild(el('div', {class:'problem-text', html: p.statement}));
+
+  // ヒントボタン（採点前のみ表示）
+  if (!state.answered && p.hint) {
+    const hintBtn = el('button', {
+      class: 'btn-hint',
+      onclick: () => { state.showHint = !state.showHint; render(); }
+    }, [state.showHint ? '▲ ヒントをとじる' : '▼ ヒントを見る']);
+    card.appendChild(hintBtn);
+    if (state.showHint) {
+      const panel = el('div', {class: 'hint-panel'});
+      panel.appendChild(el('h4', {}, ['考え方のヒント']));
+      panel.appendChild(el('div', {html: p.hint}));
+      card.appendChild(panel);
+    }
+  }
+
+  if (p.type === 'expression') {
+    card.appendChild(renderExpressionArea(p));
+  } else if (p.type === 'number') {
+    card.appendChild(renderNumberArea(p));
+  } else if (p.type === 'number2') {
+    card.appendChild(renderNumber2Area(p));
+  } else if (p.type === 'choice') {
+    card.appendChild(renderChoiceArea(p));
+  }
+
+  // フィードバック欄
+  if (state.answered) {
+    const r = state.results[state.currentIdx];
+    const fb = el('div', {class:'feedback ' + (r.correct?'correct':'wrong')});
+    fb.appendChild(el('span', {class:'mark'}, [r.correct?'○ 正解！':'✕ ざんねん']));
+    fb.appendChild(el('span', {html: p.explanation}));
+    card.appendChild(fb);
+  }
+  root.appendChild(card);
+
+  // キーパッド（入力中のみ表示）
+  if (!state.answered) {
+    if (p.type === 'expression' || p.type === 'number' || p.type === 'number2') {
+      root.appendChild(renderKeypad(p));
+    }
+  }
+
+  // アクションボタン
+  const actions = el('div', {class:'action-bar'});
+  if (!state.answered) {
+    actions.appendChild(el('button', {class:'btn-primary', onclick: checkAnswer}, ['答 え あ わ せ']));
+  } else {
+    const isLast = state.currentIdx === total - 1;
+    actions.appendChild(el('button', {class:'btn-primary', onclick: nextProblem},
+      [isLast ? '結 果 を み る' : '次 の 問 題 へ']));
+  }
+  root.appendChild(actions);
+}
+
+/* --- 立式タイプの解答エリア --- */
+function renderExpressionArea(p) {
+  const area = el('div', {class:'answer-area'});
+  for (let i = 0; i < p.boxCount; i++) {
+    const cur = state.slots[i] || '';
+    const classes = ['slot'];
+    if (cur) classes.push('filled');
+    if (i === state.selectedSlot && !state.answered) classes.push('active');
+    if (state.answered) {
+      const r = state.results[state.currentIdx];
+      if (r && r.perSlot) {
+        classes.push(r.perSlot[i] ? 'correct' : 'wrong');
+      }
+    }
+    const slot = el('div', {
+      class: classes.join(' '),
+      onclick: () => { if (!state.answered) { state.selectedSlot = i; render(); } }
+    }, [cur || '　']);
+    area.appendChild(slot);
+  }
+  return area;
+}
+
+/* --- 数値回答エリア --- */
+function renderNumberArea(p) {
+  const area = el('div', {class:'answer-area'});
+  if (p.prefix) area.appendChild(el('span', {class:'fixed-text'}, [p.prefix]));
+  const classes = ['slot','active'];
+  if (state.numInput) classes[0] = 'slot filled';
+  if (state.answered) {
+    classes.length = 1;
+    classes.push(state.results[state.currentIdx].correct ? 'correct' : 'wrong');
+  }
+  const slot = el('div', {class: classes.join(' '), style:'min-width:120px'}, [state.numInput || '　']);
+  area.appendChild(slot);
+  if (p.suffix) area.appendChild(el('span', {class:'fixed-text'}, [p.suffix]));
+  return area;
+}
+
+/* --- ブラックボックス（▲と★の2枠） --- */
+function renderNumber2Area(p) {
+  const wrap = el('div', {});
+  // 表
+  const table = el('table', {class:'box-table'});
+  const tr1 = el('tr', {});
+  tr1.appendChild(el('th', {}, ['入れる数 x']));
+  p.tableRows.forEach(r => tr1.appendChild(el('td', {}, [String(r.x)])));
+  const tr2 = el('tr', {});
+  tr2.appendChild(el('th', {}, ['出てくる数 y']));
+  p.tableRows.forEach(r => tr2.appendChild(el('td', {}, [String(r.y)])));
+  table.appendChild(tr1);
+  table.appendChild(tr2);
+  wrap.appendChild(table);
+
+  // 入力エリア
+  const area = el('div', {class:'answer-area'});
+  area.appendChild(el('span', {class:'fixed-text'}, [p.prefix1]));
+  const s1 = state.slots[0] || '';
+  const s2 = state.slots[1] || '';
+  const cls1 = ['slot'];
+  if (s1) cls1.push('filled');
+  if (state.selectedSlot === 0 && !state.answered) cls1.push('active');
+  if (state.answered) {
+    const r = state.results[state.currentIdx];
+    cls1.length = 1;
+    cls1.push(r.perSlot && r.perSlot[0] ? 'correct' : 'wrong');
+  }
+  area.appendChild(el('div', {
+    class: cls1.join(' '), style:'min-width:80px',
+    onclick: () => { if (!state.answered) { state.selectedSlot = 0; render(); } }
+  }, [s1 || '▲']));
+
+  area.appendChild(el('span', {class:'fixed-text'}, [p.prefix2]));
+
+  const cls2 = ['slot'];
+  if (s2) cls2.push('filled');
+  if (state.selectedSlot === 1 && !state.answered) cls2.push('active');
+  if (state.answered) {
+    const r = state.results[state.currentIdx];
+    cls2.length = 1;
+    cls2.push(r.perSlot && r.perSlot[1] ? 'correct' : 'wrong');
+  }
+  area.appendChild(el('div', {
+    class: cls2.join(' '), style:'min-width:80px',
+    onclick: () => { if (!state.answered) { state.selectedSlot = 1; render(); } }
+  }, [s2 || '★']));
+
+  area.appendChild(el('span', {class:'fixed-text'}, [p.suffix]));
+  wrap.appendChild(area);
+  return wrap;
+}
+
+/* --- 選択肢エリア --- */
+function renderChoiceArea(p) {
+  const list = el('div', {class:'choice-list'});
+  p.choices.forEach((c, i) => {
+    const classes = ['choice-item'];
+    if (i === state.choiceIndex && !state.answered) classes.push('selected');
+    if (state.answered) {
+      if (c.correct) classes.push('correct');
+      else if (i === state.choiceIndex) classes.push('wrong');
+    }
+    const btn = el('button', {
+      class: classes.join(' '),
+      onclick: () => { if (!state.answered) { state.choiceIndex = i; render(); } }
+    });
+    btn.appendChild(el('span', {class:'letter'}, [c.letter]));
+    btn.appendChild(el('span', {html: c.text}));
+    list.appendChild(btn);
+  });
+  return list;
+}
+
+/* --- キーパッド --- */
+function renderKeypad(p) {
+  const pad = el('div', {class:'keypad'});
+
+  // 数字ボタン
+  const row1 = el('div', {class:'key-row digits'});
+  ['0','1','2','3','4','5','6','7','8','9'].forEach(d => {
+    row1.appendChild(el('button', {class:'key', onclick: () => onKey(d)}, [d]));
+  });
+  pad.appendChild(row1);
+
+  // 文字・記号ボタン（立式/number2 のみ表示、numberは数字のみ）
+  if (p.type === 'expression' || p.type === 'number2') {
+    const row2 = el('div', {class:'key-row symbols'});
+    const syms = p.type === 'number2'
+      ? ['.','-']
+      : ['x','y','+','-','×','÷','=','.'];
+    syms.forEach(s => {
+      row2.appendChild(el('button', {class:'key', onclick: () => onKey(s)}, [s]));
+    });
+    pad.appendChild(row2);
+  } else if (p.type === 'number') {
+    const row2 = el('div', {class:'key-row symbols'});
+    ['.','-'].forEach(s => {
+      row2.appendChild(el('button', {class:'key', onclick: () => onKey(s)}, [s]));
+    });
+    pad.appendChild(row2);
+  }
+
+  // アクション（DEL / クリア）
+  const row3 = el('div', {class:'key-row actions'});
+  row3.appendChild(el('button', {class:'key del', onclick: onDelete}, ['← 1つ消す']));
+  row3.appendChild(el('button', {class:'key clear', onclick: onClear}, ['ぜんぶ消す']));
+  pad.appendChild(row3);
+
+  return pad;
+}
+
+/* ==============================================================
+   入力ロジック
+   ============================================================== */
+function onKey(k) {
+  const p = state.problems[state.currentIdx];
+  if (state.answered) return;
+
+  if (p.type === 'expression') {
+    const cur = state.slots[state.selectedSlot] || '';
+    const isDigit = /^[0-9.]$/.test(k);
+    const isNum = /^[0-9.]+$/.test(cur);
+    const isOpCur = /^[+\-×÷=xyab]$/.test(cur);
+    const lastIdx = p.boxCount - 1;
+
+    if (isDigit) {
+      if (cur === '' || isNum) {
+        // 空または数字に続く → 同じ枠に追記（多ケタ対応）
+        state.slots[state.selectedSlot] = cur + k;
+      } else if (isOpCur) {
+        // 現在が記号/文字 → 次の空き枠に数字を入れる
+        if (state.selectedSlot < lastIdx) {
+          state.selectedSlot++;
+          state.slots[state.selectedSlot] = k;
+        }
+      }
+    } else {
+      // 演算子・文字
+      if (cur === '') {
+        state.slots[state.selectedSlot] = k;
+        if (state.selectedSlot < lastIdx) state.selectedSlot++;
+      } else if (isNum) {
+        // 数字の入力を確定して、次の枠に記号を入れて1つ進む
+        if (state.selectedSlot < lastIdx) {
+          state.selectedSlot++;
+          state.slots[state.selectedSlot] = k;
+          if (state.selectedSlot < lastIdx) state.selectedSlot++;
+        }
+      } else {
+        // 現在も記号/文字 → 置き換える
+        state.slots[state.selectedSlot] = k;
+        if (state.selectedSlot < lastIdx) state.selectedSlot++;
+      }
+    }
+  } else if (p.type === 'number') {
+    state.numInput = state.numInput + k;
+  } else if (p.type === 'number2') {
+    const cur = state.slots[state.selectedSlot] || '';
+    state.slots[state.selectedSlot] = cur + k;
+  }
+  render();
+}
+
+function onDelete() {
+  const p = state.problems[state.currentIdx];
+  if (state.answered) return;
+  if (p.type === 'expression') {
+    const cur = state.slots[state.selectedSlot] || '';
+    if (cur.length > 1) {
+      state.slots[state.selectedSlot] = cur.slice(0, -1);
+    } else {
+      state.slots[state.selectedSlot] = '';
+    }
+  } else if (p.type === 'number') {
+    state.numInput = state.numInput.slice(0, -1);
+  } else if (p.type === 'number2') {
+    const cur = state.slots[state.selectedSlot] || '';
+    state.slots[state.selectedSlot] = cur.slice(0, -1);
+  }
+  render();
+}
+
+function onClear() {
+  const p = state.problems[state.currentIdx];
+  if (state.answered) return;
+  if (p.type === 'expression') {
+    state.slots[state.selectedSlot] = '';
+  } else if (p.type === 'number') {
+    state.numInput = '';
+  } else if (p.type === 'number2') {
+    state.slots[state.selectedSlot] = '';
+  }
+  render();
+}
+
+/* ==============================================================
+   採点
+   ============================================================== */
+function normalizeToken(t) {
+  if (t == null) return '';
+  // 全角→半角など基本的な正規化
+  return String(t)
+    .replace(/×/g, '×').replace(/÷/g, '÷')
+    .replace(/＋/g,'+').replace(/−/g,'-').replace(/ー/g,'-')
+    .replace(/＊/g,'×').replace(/\//g,'÷')
+    .replace(/＝/g,'=')
+    .replace(/[Ａ-Ｚａ-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0)-0xFEE0))
+    .replace(/[０-９．]/g, s => {
+      const c = s.charCodeAt(0);
+      if (c >= 0xFF10 && c <= 0xFF19) return String.fromCharCode(c-0xFEE0);
+      if (s === '．') return '.';
+      return s;
+    })
+    .trim();
+}
+
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (normalizeToken(a[i]) !== normalizeToken(b[i])) return false;
+  }
+  return true;
+}
+
+function checkAnswer() {
+  const p = state.problems[state.currentIdx];
+  let correct = false;
+  let userAnswer = '';
+  let perSlot = null;
+
+  if (p.type === 'expression') {
+    const user = [];
+    for (let i = 0; i < p.boxCount; i++) user.push(state.slots[i] || '');
+    userAnswer = user.join(' ');
+    if (arraysEqual(user, p.answer)) correct = true;
+    else if (p.alternates && p.alternates.some(a => arraysEqual(user, a))) correct = true;
+    // 各枠ごとの正誤（主解答との比較）
+    perSlot = user.map((v, i) => normalizeToken(v) === normalizeToken(p.answer[i]));
+  } else if (p.type === 'number') {
+    const v = parseFloat(normalizeToken(state.numInput));
+    userAnswer = state.numInput;
+    if (!isNaN(v) && Math.abs(v - p.answer) < 1e-9) correct = true;
+  } else if (p.type === 'number2') {
+    const v1 = parseFloat(normalizeToken(state.slots[0] || ''));
+    const v2 = parseFloat(normalizeToken(state.slots[1] || ''));
+    userAnswer = `${state.slots[0]||''} / ${state.slots[1]||''}`;
+    const ok1 = !isNaN(v1) && Math.abs(v1 - p.answer1) < 1e-9;
+    const ok2 = !isNaN(v2) && Math.abs(v2 - p.answer2) < 1e-9;
+    if (ok1 && ok2) correct = true;
+    perSlot = [ok1, ok2];
+  } else if (p.type === 'choice') {
+    if (state.choiceIndex >= 0) {
+      const c = p.choices[state.choiceIndex];
+      userAnswer = c.letter;
+      correct = !!c.correct;
+    }
+  }
+
+  // 未入力チェック（何も入ってなければ採点しない）
+  if (!hasAnyInput(p)) return;
+
+  state.results[state.currentIdx] = {correct, user: userAnswer, perSlot};
+  state.answered = true;
+  render();
+}
+
+function hasAnyInput(p) {
+  if (p.type === 'expression') return state.slots.some(s => s && s.length > 0);
+  if (p.type === 'number') return state.numInput.length > 0;
+  if (p.type === 'number2') return (state.slots[0] && state.slots[0].length>0) && (state.slots[1] && state.slots[1].length>0);
+  if (p.type === 'choice') return state.choiceIndex >= 0;
+  return false;
+}
+
+/* ==============================================================
+   問題遷移
+   ============================================================== */
+function nextProblem() {
+  const total = state.problems.length;
+  if (state.currentIdx >= total - 1) {
+    state.screen = 'result';
+    render();
+    return;
+  }
+  state.currentIdx++;
+  resetInput();
+  render();
+}
+
+function resetInput() {
+  const p = state.problems[state.currentIdx];
+  state.slots = [];
+  if (p.type === 'expression') {
+    state.slots = new Array(p.boxCount).fill('');
+  } else if (p.type === 'number2') {
+    state.slots = ['',''];
+  }
+  state.selectedSlot = 0;
+  state.numInput = '';
+  state.choiceIndex = -1;
+  state.answered = false;
+  state.showHint = false;
+}
+
+/* ==============================================================
+   結果画面
+   ============================================================== */
+function renderResult(root) {
+  const total = state.problems.length;
+  const ok = state.results.filter(r => r.correct).length;
+  const lesson = LESSON_META[state.lesson];
+  const hero = el('div', {class:'result-hero'});
+  hero.appendChild(el('div', {class:'small-note'}, [lesson.label + ' の けっか']));
+  const score = el('div', {class:'score'});
+  score.innerHTML = `${ok}<small> / ${total} 問</small>`;
+  hero.appendChild(score);
+  let msg = '';
+  const rate = ok / total;
+  if (rate === 1) msg = 'ぜんもん 正解！ すばらしい！';
+  else if (rate >= 0.8) msg = 'よくできました！';
+  else if (rate >= 0.5) msg = 'いい ちょうし！ もう一度 ちょうせん！';
+  else msg = 'もう一度 れんしゅうして みよう！';
+  hero.appendChild(el('div', {class:'msg'}, [msg]));
+  root.appendChild(hero);
+
+  // 一覧
+  const list = el('div', {class:'result-list'});
+  state.problems.forEach((p, i) => {
+    const r = state.results[i] || {correct:false};
+    const item = el('div', {class:'item'});
+    item.appendChild(el('span', {class:'mark '+(r.correct?'ok':'ng')}, [r.correct?'○':'✕']));
+    const body = el('div', {style:'flex:1'});
+    body.appendChild(el('div', {html: `第 ${i+1} 問：` + stripHtml(p.statement).slice(0, 40) + '…'}));
+    body.appendChild(el('div', {class:'small-note', html: p.explanation}));
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+  root.appendChild(list);
+
+  // アクション
+  const actions = el('div', {class:'action-bar', style:'flex-wrap:wrap;'});
+  actions.appendChild(el('button', {
+    class:'btn-primary',
+    onclick: () => { startLesson(state.lesson); }
+  }, ['もう一度 やる（新しい問題）']));
+  actions.appendChild(el('button', {
+    class:'btn-secondary',
+    onclick: goToTop
+  }, ['トップへ もどる']));
+  root.appendChild(actions);
+}
+function stripHtml(s){ const d=document.createElement('div'); d.innerHTML=s; return d.textContent||''; }
+
+/* ==============================================================
+   ナビゲーション
+   ============================================================== */
+function startLesson(key) {
+  state.lesson = key;
+  state.screen = 'lesson';
+  state.currentIdx = 0;
+  state.results = [];
+  const count = key === 'matome' ? 20 : 10;
+  state.problems = generateProblems(key, count);
+  resetInput();
+  render();
+  window.scrollTo(0, 0);
+}
+function goToTop() {
+  state.screen = 'top';
+  state.lesson = null;
+  state.problems = [];
+  state.results = [];
+  state.currentIdx = 0;
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* ==============================================================
+   「やめる」モーダル（独自デザイン、標準 alert は使わない）
+   ============================================================== */
+function showQuitModal() {
+  $('#quitModal').classList.add('show');
+}
+function hideQuitModal() {
+  $('#quitModal').classList.remove('show');
+}
+
+/* ==============================================================
+   文字サイズ切替
+   ============================================================== */
+function setFontSize(size) {
+  state.fontSize = size;
+  const scale = {small: 0.88, medium: 1.0, large: 1.18}[size];
+  document.documentElement.style.setProperty('--font-scale', scale);
+  $$('.fontsize-group button').forEach(b => {
+    b.classList.toggle('active', b.dataset.size === size);
+  });
+}
+
+/* ==============================================================
+   初期化
+   ============================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  // トップに戻るボタン
+  $('#homeBtn').addEventListener('click', () => {
+    if (state.screen === 'lesson') {
+      showQuitModal();
+    } else {
+      goToTop();
+    }
+  });
+
+  // 「やめる」モーダルのボタン
+  $('#quitCancel').addEventListener('click', hideQuitModal);
+  $('#quitOk').addEventListener('click', () => {
+    hideQuitModal();
+    goToTop();
+  });
+  // 背景クリックでキャンセル
+  $('#quitModal').addEventListener('click', (e) => {
+    if (e.target.id === 'quitModal') hideQuitModal();
+  });
+
+  // 文字サイズ切替
+  $$('.fontsize-group button').forEach(b => {
+    b.addEventListener('click', () => setFontSize(b.dataset.size));
+  });
+
+  // 初期レンダリング
+  render();
+});
+</script>
+<script>
+if('serviceWorker' in navigator && location.protocol==='https:'){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}}
+</script>
+</body>
+</html>

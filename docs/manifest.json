@@ -1,0 +1,31 @@
+{
+  "name": "文字と式 れんしゅう",
+  "short_name": "文字と式",
+  "description": "6年算数「文字と式」の練習アプリ。URLを開くだけで使えます。",
+  "lang": "ja",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2C5F7C",
+  "theme_color": "#2C5F7C",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
